@@ -1,0 +1,40 @@
+spring:
+  application.name: ParkingSystemBackend
+  data:
+    mongodb:
+      auto-index-creation: true
+  mongodb:
+    uri: mongodb://root:root@localhost:27017/parking?authSource=admin
+#  security:
+#    oauth2:
+#      resourceserver:
+#        jwt:
+#          issuer-uri: "http://localhost:8080"
+
+#          public-key-location: classpath:keystore/public_key.pem
+server:
+  port: 8080
+
+logbook:
+  format:
+    style: json
+  filter:
+    enabled: true
+  obfuscate:
+    headers:
+      - Authorization
+      - Cookie
+    parameters:
+      - password
+      - refreshToken
+  filters:
+    body:
+      default-enabled: true
+  attribute-extractors:
+    type: JwtAllMatchingClaimsExtractor
+
+
+logging:
+  level:
+    org.zalando.logbook: TRACE
+    org.zalando.logbook.Logbook: TRACE
