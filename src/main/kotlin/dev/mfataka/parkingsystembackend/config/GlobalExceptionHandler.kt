@@ -1,7 +1,5 @@
 package dev.mfataka.parkingsystembackend.config
 
-import dev.mfataka.parkingsystembackend.model.BaseResponse
-import dev.mfataka.parkingsystembackend.model.FAILED
 import org.springframework.dao.DuplicateKeyException
 import org.springframework.http.ResponseEntity
 import org.springframework.web.bind.annotation.ExceptionHandler
@@ -15,8 +13,6 @@ import org.springframework.web.bind.annotation.RestControllerAdvice
 @RestControllerAdvice
 class GlobalExceptionHandler {
     @ExceptionHandler(DuplicateKeyException::class)
-    fun handleDuplicateKey(): ResponseEntity<BaseResponse<*>> =
-        ResponseEntity.badRequest().body(
-            BaseResponse<Any>(FAILED, "duplicate key")
-        )
+    fun handleDuplicateKey(): ResponseEntity<*> =
+        ResponseEntity.badRequest().body("Duplicate Key")
 }

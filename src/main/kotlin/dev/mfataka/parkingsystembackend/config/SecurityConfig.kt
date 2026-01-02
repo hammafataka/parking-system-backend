@@ -20,7 +20,6 @@ import org.springframework.security.oauth2.jwt.Jwt
 import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationConverter
 import org.springframework.security.oauth2.server.resource.authentication.ReactiveJwtAuthenticationConverterAdapter
 import org.springframework.security.web.server.SecurityWebFilterChain
-import org.springframework.security.web.server.csrf.CookieServerCsrfTokenRepository
 import org.springframework.web.cors.CorsConfiguration
 import org.springframework.web.cors.reactive.CorsConfigurationSource
 import org.springframework.web.cors.reactive.UrlBasedCorsConfigurationSource
@@ -73,9 +72,10 @@ class SecurityConfig(val userDetailsService: ReactiveUserDetailsService) {
     fun corsConfigurationSource(): CorsConfigurationSource {
         return UrlBasedCorsConfigurationSource().apply {
             val corsConfiguration = CorsConfiguration().apply {
-                allowedOrigins = listOf("http://localhost:3000", "http://localhost:8080")
+                allowedOriginPatterns = listOf("http://localhost:*", "http://10.0.2.2:*", "http://127.0.0.1:*")
                 allowedMethods = listOf("GET", "POST", "PUT", "DELETE", "OPTIONS")
                 allowedHeaders = listOf("content-type", "authorization", "X-XSRF-TOKEN", REFRESH_TOKEN, DEVICE_ID)
+                exposedHeaders = listOf("set-cookie")
                 allowCredentials = true
             }
             registerCorsConfiguration("/**", corsConfiguration)
@@ -96,7 +96,7 @@ class SecurityConfig(val userDetailsService: ReactiveUserDetailsService) {
         val converter = JwtAuthenticationConverter().apply {
             setJwtGrantedAuthoritiesConverter { jwt ->
                 val roles = (jwt.claims["roles"] as? List<*>)?.filterIsInstance<String>() ?: emptyList()
-                roles.map { SimpleGrantedAuthority("ROLE_$it") }
+                roles.map { SimpleGrantedAuthority(it) }
             }
         }
         return ReactiveJwtAuthenticationConverterAdapter(converter)

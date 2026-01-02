@@ -6,7 +6,7 @@ package dev.mfataka.parkingsystembackend.security
  * @date 21.12.2025 2:38
  */
 
-const val TOKEN_VALID_FOR_SECONDS = 15 * 60L
+const val TOKEN_VALID_FOR_SECONDS = 1 * 60L
 const val REFRESH_TOKEN = "refresh_token"
 
 const val DEVICE_ID = "device_id"

@@ -64,7 +64,7 @@ class AuthService(
                         .subject(userId)
                         .issuedAt(now)
                         .expiresAt(now.plusSeconds(TOKEN_VALID_FOR_SECONDS))
-                        .claim("roles", it.authorities)
+                        .claim("roles", it.authorities.map { a -> a.authority })
                         .build()
                     val token = jwtEncoder.encode(JwtEncoderParameters.from(claims)).tokenValue
                     setHttpOnlyCookie(exchange, REFRESH_TOKEN, refreshRaw, Duration.ofDays(refreshTtlDays))
@@ -78,10 +78,16 @@ class AuthService(
     fun refreshToken(exchange: ServerWebExchange): Mono<LoginResponse> {
         val refreshRaw = (exchange.request.cookies.getFirst(REFRESH_TOKEN)
             ?.value
-            ?: return Mono.error { ResponseStatusException(HttpStatus.UNAUTHORIZED, "Invalid refresh token") })
+            ?: return Mono.error {
+                log.info { "refresh token not found" }
+                ResponseStatusException(HttpStatus.UNAUTHORIZED, "Invalid refresh token")
+            })
         val deviceId = (exchange.request.cookies.getFirst(DEVICE_ID)
             ?.value
-            ?: return Mono.error { ResponseStatusException(HttpStatus.UNAUTHORIZED, "Invalid deviceId") })
+            ?: return Mono.error {
+                log.info { "Device Id not found" }
+                ResponseStatusException(HttpStatus.UNAUTHORIZED, "Invalid deviceId")
+            })
         val presentedHash = sha256Base64Url(refreshRaw)
         val now = Instant.now()
 
@@ -146,7 +152,7 @@ class AuthService(
         exchange.response.apply {
             val cookie = ResponseCookie.from(name, "")
                 .httpOnly(true)
-                .secure(true)
+                .secure(false)
                 .sameSite("Strict")
                 .path("/api/v1/auth")
                 .maxAge(Duration.ZERO)
@@ -162,7 +168,7 @@ class AuthService(
             addCookie(
                 ResponseCookie.from(name, value)
                     .httpOnly(true)
-                    .secure(true)
+                    .secure(false)
                     .sameSite("Strict")
                     .path("/api/v1/auth")
                     .maxAge(maxAge)

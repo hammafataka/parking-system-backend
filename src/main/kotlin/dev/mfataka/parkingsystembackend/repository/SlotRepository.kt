@@ -1,8 +1,10 @@
 package dev.mfataka.parkingsystembackend.repository
 
 import dev.mfataka.parkingsystembackend.collection.Slot
-import org.springframework.data.mongodb.repository.MongoRepository
+import org.springframework.data.mongodb.repository.ReactiveMongoRepository
 import org.springframework.stereotype.Repository
+import reactor.core.publisher.Flux
+import reactor.core.publisher.Mono
 
 /**
  * @author HAMMA FATAKA (mfataka@monetplus.cz)
@@ -10,10 +12,9 @@ import org.springframework.stereotype.Repository
  * @date 18.12.2025 22:36
  */
 @Repository
-interface SlotRepository : MongoRepository<Slot, String> {
+interface SlotRepository : ReactiveMongoRepository<Slot, String> {
 
-    fun findSlotsByAvailableIsTrue(): List<Slot>
-    fun existsByName(name: String): Boolean
-    fun findByName(slotName: String): Slot?
-    fun findAllByGarageName(garageName: String): List<Slot>
+    fun existsByName(name: String): Mono<Boolean>
+    fun findByName(slotName: String): Mono<Slot>
+    fun findAllByGarageName(garageName: String): Flux<Slot>
 }

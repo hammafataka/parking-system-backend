@@ -5,7 +5,11 @@ import dev.mfataka.parkingsystembackend.model.slot.ReserveSlotRequest
 import dev.mfataka.parkingsystembackend.model.slot.SlotRequest
 import dev.mfataka.parkingsystembackend.repository.SlotRepository
 import org.springframework.beans.factory.annotation.Autowired
+import org.springframework.data.mongodb.core.ReactiveMongoTemplate
+import org.springframework.data.mongodb.core.query
 import org.springframework.stereotype.Service
+import reactor.core.publisher.Flux
+import reactor.core.publisher.Mono
 import java.time.LocalDateTime
 
 /**
@@ -15,44 +19,53 @@ import java.time.LocalDateTime
  */
 
 @Service
-class SlotService(@Autowired val slotRepository: SlotRepository) {
+class SlotService(@Autowired private val slotRepository: SlotRepository,
+                  private val mongoTemplate: ReactiveMongoTemplate) {
 
 
-    fun findAllByGarageName(garageName: String): List<Slot> {
+    fun findAllByGarageName(garageName: String): Flux<Slot> {
         return slotRepository.findAllByGarageName(garageName)
     }
 
-    fun reserve(req: ReserveSlotRequest): Slot {
-        val slot = slotRepository.findByName(req.slotName)
-            ?: throw IllegalArgumentException("Slot not found: ${req.slotName}")
+    fun reserve(req: ReserveSlotRequest): Mono<Slot> {
+        return slotRepository.findByName(req.slotName)
+            .flatMap {
+                if (!it.isAvailable(req.reservedFrom)) {
+                    throw IllegalStateException("Slot ${req.slotName} is not available")
+                }
+                val updated = it.copy(
+                    reservedBy = req.reservedBy,
+                    reservedFrom = req.reservedFrom,
+                    reservedUntil = req.reservedUntil,
+                    lastModified = LocalDateTime.now()
+                )
 
-        if (!slot.available) {
-            throw IllegalStateException("Slot ${req.slotName} is not available")
-        }
-
-        val updated = slot.copy(
-            available = false,
-            reservedBy = req.reservedBy,
-            reservedFrom = req.reservedFrom,
-            reservedUntil = req.reservedUntil,
-            lastModified = LocalDateTime.now()
-        )
-
-        return slotRepository.save(updated)
+                slotRepository.save(updated)
+            }
     }
-
-    fun findAllAvailable() = slotRepository.findSlotsByAvailableIsTrue()
 
     fun findById(id: String) = slotRepository.findById(id)
 
     fun findAll() = slotRepository.findAll()
+        .map { slot -> slot.toDto() }
 
-    fun registerSlot(requestSlot: SlotRequest): Slot {
-        val exists = slotRepository.existsByName(requestSlot.name)
-        if (exists) {
-            error("A slot's id ${requestSlot.name} already exists.")
-        }
-        return slotRepository.save(requestSlot.asSlot())
+    fun registerSlot(requestSlot: SlotRequest): Mono<Slot> {
+        return slotRepository.existsByName(requestSlot.name)
+            .flatMap { exists ->
+                if (exists) {
+                    error("A slot's id ${requestSlot.name} already exists.")
+                }
+                slotRepository.save(requestSlot.asSlot())
+            }
+
 
     }
+
+    fun distinctGarages(): Flux<String> {
+        return mongoTemplate.query<Slot>()
+            .distinct("garageName")
+            .`as`(String::class.java)
+            .all()
+    }
+
 }

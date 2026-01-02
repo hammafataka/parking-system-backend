@@ -1,14 +1,14 @@
 package dev.mfataka.parkingsystembackend.resources
 
 import dev.mfataka.parkingsystembackend.collection.Slot
-import dev.mfataka.parkingsystembackend.model.BaseResponse
-import dev.mfataka.parkingsystembackend.model.BaseResponse.Companion.ok
+import dev.mfataka.parkingsystembackend.collection.SlotDto
 import dev.mfataka.parkingsystembackend.model.slot.ReserveSlotRequest
 import dev.mfataka.parkingsystembackend.model.slot.SlotRequest
 import dev.mfataka.parkingsystembackend.service.SlotService
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.http.MediaType
 import org.springframework.web.bind.annotation.*
+import reactor.core.publisher.Mono
 
 /**
  * @author HAMMA FATAKA (mfataka@monetplus.cz)
@@ -19,27 +19,31 @@ import org.springframework.web.bind.annotation.*
 @RequestMapping(path = ["/api/v1/slots"])
 class SlotResource(@Autowired val slotsService: SlotService) {
 
+    @GetMapping(path = ["/garages"], produces = [MediaType.APPLICATION_JSON_VALUE])
+    fun garages(): Mono<List<String>> {
+        return slotsService.distinctGarages()
+            .collectList()
+
+    }
 
     @GetMapping(path = ["/all/{garageName}"])
-    fun findAllByGarageName(@PathVariable garageName: String): BaseResponse<List<Slot>> {
-        return ok(slotsService.findAllByGarageName(garageName))
+    fun findAllByGarageName(@PathVariable garageName: String): Mono<List<Slot>> {
+        return slotsService.findAllByGarageName(garageName)
+            .collectList()
     }
 
     @PostMapping(path = ["/add"], consumes = [MediaType.APPLICATION_JSON_VALUE])
-    fun addSlot(@RequestBody requestSlot: SlotRequest): BaseResponse<Slot> {
-        return ok(slotsService.registerSlot(requestSlot))
+    fun addSlot(@RequestBody requestSlot: SlotRequest): Mono<Slot> {
+        return slotsService.registerSlot(requestSlot)
     }
 
     @PostMapping("/reserve", consumes = [MediaType.APPLICATION_JSON_VALUE], produces = [MediaType.APPLICATION_JSON_VALUE])
-    fun reserveSlot(@RequestBody req: ReserveSlotRequest): BaseResponse<Slot> {
-        return ok(slotsService.reserve(req))
+    fun reserveSlot(@RequestBody req: ReserveSlotRequest): Mono<Slot> {
+        return slotsService.reserve(req)
     }
 
     @GetMapping(value = ["/all"], produces = [MediaType.APPLICATION_JSON_VALUE])
-    fun findAllSlots() = ok(slotsService.findAll())
-
-
-    @GetMapping(value = ["/all/available"], produces = [MediaType.APPLICATION_JSON_VALUE])
-    fun findAllAvailableSlots() = ok(slotsService.findAllAvailable())
+    fun findAllSlots(): Mono<List<SlotDto>> = slotsService.findAll()
+        .collectList()
 
 }

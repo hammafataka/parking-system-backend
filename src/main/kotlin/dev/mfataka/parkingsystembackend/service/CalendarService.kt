@@ -5,6 +5,7 @@ import io.github.oshai.kotlinlogging.KotlinLogging
 import org.springframework.stereotype.Service
 import org.springframework.web.reactive.function.client.WebClient
 import org.springframework.web.reactive.function.client.toEntity
+import reactor.core.publisher.Mono
 import java.time.LocalDate
 
 /**
@@ -15,8 +16,12 @@ import java.time.LocalDate
 @Service
 class CalendarService {
     private val log = KotlinLogging.logger {}
+    private val holidayCache = mutableListOf<Holiday>()
 
-    fun findHolidays(): List<Holiday>? {
+    fun findHolidays(): Mono<List<Holiday>> {
+        if (!holidayCache.isEmpty()) {
+            return Mono.just(holidayCache)
+        }
         val today = LocalDate.now()
         val startDate = today.toString()
         val endDate = today.plusYears(1).toString()
@@ -26,8 +31,13 @@ class CalendarService {
             .exchangeToMono { response -> response.toEntity<List<Holiday>>() }
             .filter { it.statusCode.is2xxSuccessful }
             .map { response -> response.body as List<Holiday> }
+            .doOnNext { holidays -> holidayCache.addAll(holidays) }
             .doOnNext { log.info { "successfully retrieved ${it.size} holidays" } }
-            .block()
+    }
 
+    fun isHoliday(date: LocalDate): Boolean {
+        return holidayCache.any { h ->
+            !date.isBefore(h.startDate) && !date.isAfter(h.endDate)
+        }
     }
 }
