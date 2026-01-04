@@ -2,11 +2,14 @@ package dev.mfataka.parkingsystembackend.resources
 
 import dev.mfataka.parkingsystembackend.collection.Slot
 import dev.mfataka.parkingsystembackend.collection.SlotDto
+import dev.mfataka.parkingsystembackend.model.reservation.SlotAvailabilityRequest
+import dev.mfataka.parkingsystembackend.model.reservation.SlotAvailabilityResponse
 import dev.mfataka.parkingsystembackend.model.slot.ReserveSlotRequest
 import dev.mfataka.parkingsystembackend.model.slot.SlotRequest
 import dev.mfataka.parkingsystembackend.service.SlotService
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.http.MediaType
+import org.springframework.security.core.Authentication
 import org.springframework.web.bind.annotation.*
 import reactor.core.publisher.Mono
 
@@ -26,6 +29,11 @@ class SlotResource(@Autowired val slotsService: SlotService) {
 
     }
 
+    @PostMapping("/range")
+    fun availability(@RequestBody request: SlotAvailabilityRequest): Mono<SlotAvailabilityResponse> {
+        return slotsService.slotsForRange(request)
+    }
+
     @GetMapping(path = ["/all/{garageName}"])
     fun findAllByGarageName(@PathVariable garageName: String): Mono<List<Slot>> {
         return slotsService.findAllByGarageName(garageName)
@@ -38,8 +46,8 @@ class SlotResource(@Autowired val slotsService: SlotService) {
     }
 
     @PostMapping("/reserve", consumes = [MediaType.APPLICATION_JSON_VALUE], produces = [MediaType.APPLICATION_JSON_VALUE])
-    fun reserveSlot(@RequestBody req: ReserveSlotRequest): Mono<Slot> {
-        return slotsService.reserve(req)
+    fun reserveSlot(@RequestBody req: ReserveSlotRequest, auth: Authentication): Mono<Slot> {
+        return slotsService.reserve(req, auth.name)
     }
 
     @GetMapping(value = ["/all"], produces = [MediaType.APPLICATION_JSON_VALUE])

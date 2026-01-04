@@ -1,7 +1,8 @@
 package dev.mfataka.parkingsystembackend.model.reservation
 
 import com.fasterxml.jackson.annotation.JsonFormat
-import java.time.LocalDate
+import java.time.LocalDateTime
+
 /**
  * @author HAMMA FATAKA (mfataka@monetplus.cz)
  * @project ParkingSystemBackend
@@ -10,6 +11,8 @@ import java.time.LocalDate
 
 data class CreateReservationRequest(
     val slotName: String,
-    @JsonFormat(pattern = "yyyy-MM-dd")
-    val date: LocalDate
+    @JsonFormat(pattern = "yyyy-MM-dd'T'HH:mm:ss'Z'")
+    val startDttm: LocalDateTime,
+    @JsonFormat(pattern = "yyyy-MM-dd'T'HH:mm:ss'Z'")
+    val endDttm: LocalDateTime,
 )

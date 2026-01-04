@@ -1,6 +1,5 @@
 package dev.mfataka.parkingsystembackend.resources
 
-import dev.mfataka.parkingsystembackend.collection.User
 import dev.mfataka.parkingsystembackend.model.user.RegisterUserRequest
 import dev.mfataka.parkingsystembackend.security.UserResponse
 import dev.mfataka.parkingsystembackend.service.UserService
@@ -21,8 +20,9 @@ class UserResource(@Autowired val userService: UserService) {
 
 
     @PostMapping(value = ["/register"], produces = [MediaType.APPLICATION_JSON_VALUE])
-    fun registerUser(@RequestBody request: RegisterUserRequest): Mono<User> {
+    fun registerUser(@RequestBody request: RegisterUserRequest): Mono<UserResponse> {
         return userService.registerOne(request)
+            .map { it.asResponse() }
     }
 
     @GetMapping(value = ["/current"])

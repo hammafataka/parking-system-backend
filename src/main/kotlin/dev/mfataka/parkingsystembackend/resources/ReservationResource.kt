@@ -1,13 +1,11 @@
 package dev.mfataka.parkingsystembackend.resources
 
 import dev.mfataka.parkingsystembackend.collection.Reservation
-import dev.mfataka.parkingsystembackend.model.reservation.AvailabilityResponse
-import dev.mfataka.parkingsystembackend.model.reservation.CreateReservationRequest
+import dev.mfataka.parkingsystembackend.model.slot.ReserveSlotRequest
 import dev.mfataka.parkingsystembackend.service.ReservationService
 import org.springframework.security.core.Authentication
 import org.springframework.web.bind.annotation.*
 import reactor.core.publisher.Mono
-import java.time.LocalDate
 
 
 /**
@@ -22,14 +20,8 @@ class ReservationResource(
     private val reservationService: ReservationService
 ) {
 
-    @GetMapping("/availability")
-    fun availability(@RequestParam date: String): Mono<AvailabilityResponse> {
-        val d = LocalDate.parse(date)
-        return reservationService.availability(d)
-    }
-
-    @PostMapping
-    fun create(@RequestBody req: CreateReservationRequest, auth: Authentication): Mono<Reservation> {
+    @PostMapping("/create")
+    fun create(@RequestBody req: ReserveSlotRequest, auth: Authentication): Mono<Reservation> {
         return reservationService.create(req, auth.name)
     }
 
